@@ -1,62 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>操作系统・同步问题</title>
-    <url>/2021/04/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%C2%B7%E5%90%8C%E6%AD%A5%E9%97%AE%E9%A2%98/</url>
-    <content><![CDATA[<p><strong>经典同步问题</strong></p>
-<p><em>1. 生产者消费者问题</em></p>
-<ul>
-<li><p>一组生产者进程 (Producer)</p>
-</li>
-<li><p>一组消费者进程 (Consumer)</p>
-</li>
-<li><p>共享初始为空 大小为 n 的缓冲区 (Buffer)</p>
-</li>
-</ul>
-<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">semaphore mutex = 1;  //mutex</span><br><span class="line">semaphore empty = n;  //buffer</span><br><span class="line">semaphore full = 0;   //full</span><br><span class="line"></span><br><span class="line">Producer(){</span><br><span class="line">	while(1){</span><br><span class="line">		Produce();</span><br><span class="line">		P(mutex);</span><br><span class="line">		add2Buffer();</span><br><span class="line">		V(mutex);</span><br><span class="line">		V(full);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">Consumer(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(full);</span><br><span class="line">		P(mutex);</span><br><span class="line">		getFromBuffer();</span><br><span class="line">		V(mutex);</span><br><span class="line">		Consume();</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
-<p><em>2. 读者写者问题</em></p>
-<ul>
-<li>读者进程 (Reader)</li>
-<li> 写者进程 (Writer)</li>
-<li> 共享一个文档 (Document)</li>
-<li> 多进程读，不可多进程写</li>
-<li>写进程写，不可读</li>
-<li>写进程检查是否有读进程读</li>
-</ul>
-<p><strong>读进程优先</strong></p>
-<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">int count = 0;</span><br><span class="line">semaphore mutex = 1;</span><br><span class="line">semaphore rw = 1;</span><br><span class="line">Reader(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(mutex);</span><br><span class="line">		if(count == 0)</span><br><span class="line">			P(rw);</span><br><span class="line">		count++;</span><br><span class="line">		V(mutex);</span><br><span class="line">		Read();</span><br><span class="line">		P(mutex);</span><br><span class="line">		count--;</span><br><span class="line">		if(count == 0)</span><br><span class="line">			V(rw);</span><br><span class="line">		V(mutex);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Writer(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(rw);</span><br><span class="line">		write();</span><br><span class="line">		v(rw);</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
-<p><strong>写进程优先</strong></p>
-<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">int count = 0;</span><br><span class="line">semaphore mutex = 1;</span><br><span class="line">semaphore rw = 1;</span><br><span class="line">semaphore w = 1;</span><br><span class="line">Writer(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(w);</span><br><span class="line">		P(rw);</span><br><span class="line">		Write();</span><br><span class="line">		V(rw);</span><br><span class="line">		V(w);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Reader(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(w);</span><br><span class="line">		P(mutex);</span><br><span class="line">		if(count == 0)</span><br><span class="line">			P(rw);</span><br><span class="line">		count++;</span><br><span class="line">		V(mutex);</span><br><span class="line">		V(w);</span><br><span class="line">		Read();</span><br><span class="line">		P(mutex);</span><br><span class="line">		count--;</span><br><span class="line">		if(count == 0)</span><br><span class="line">			V(rw);</span><br><span class="line">		V(mutex);</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
-<p><em>3. 哲学家进餐问题</em></p>
-<ul>
-<li>5 名哲学家 (Philosopher)</li>
-<li> 每两名之间有一根筷子 (Chopstick)</li>
-<li> 每名有一碗饭</li>
-<li>吃完饭思考 </li>
-</ul>
-<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">semaphore Chopsticks[5] = {1, 1, 1, 1, 1};</span><br><span class="line">semaphore mutex = 1;</span><br><span class="line">Philosopher(){</span><br><span class="line">	do{</span><br><span class="line">		P(mutex);</span><br><span class="line">		P(Chopsticks[i]);</span><br><span class="line">		P(Chopsticks[(i+1)%5]);</span><br><span class="line">		V(mutex);</span><br><span class="line">		eat();</span><br><span class="line">		V(Chopsticks[i]);</span><br><span class="line">		V(Chopsticks[(i+1)%5]);</span><br><span class="line">		think();</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
-<p><strong>4. 吸烟者问题</strong></p>
-<ul>
-<li>3 个吸烟者进程 (Smoker)</li>
-<li>1 个提供者进程 (Offer)</li>
-<li>Smoker1(paper, glue)</li>
-<li>Smoker2(tobacco, glue)</li>
-<li>Smoker3(paper, tobacco)</li>
-<li>Offer(offer1) return paper, glue</li>
-<li>Offer(offer2) return tobacco, glue</li>
-<li>Offer(offer3) return paper, tobacco</li>
-</ul>
-<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">int num = 0;	//store random num</span><br><span class="line">semaphore offer1 = 0;</span><br><span class="line">semaphore offer2 = 0;</span><br><span class="line">semaphore offer3 = 0;</span><br><span class="line">semaphore end = 0;</span><br><span class="line">Offer(){</span><br><span class="line">	whlie(1){</span><br><span class="line">		num++;</span><br><span class="line">		num = num % 3;</span><br><span class="line">		if(num == 0)</span><br><span class="line">			V(offer1);</span><br><span class="line">		else if(num == 1)</span><br><span class="line">			V(offer2);</span><br><span class="line">		else</span><br><span class="line">			V(offer3);</span><br><span class="line">		P(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Smoker1(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(offer3);</span><br><span class="line">		smoke();</span><br><span class="line">		V(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Smoker2(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(offer2);</span><br><span class="line">		smoke();</span><br><span class="line">		V(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Smoker3(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(offer1);</span><br><span class="line">		smoke();</span><br><span class="line">		V(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
-<p><em>eg1</em></p>
-<ul>
-<li>3 个进程 P1 P2 P3</li>
-<li> 互斥使用 N 个单元的缓冲区 (Buffer)</li>
-<li>P1 produce() return (int num) put() @Buffer</li>
-<li>P2 </li>
-</ul>
-]]></content>
-  </entry>
-  <entry>
     <title>操作系统・简述</title>
     <url>/2021/04/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%C2%B7%E7%AE%80%E8%BF%B0/</url>
     <content><![CDATA[<h1 id="第一章-计算机系统概述"><a href="#第一章-计算机系统概述" class="headerlink" title="第一章 计算机系统概述"></a>第一章 计算机系统概述</h1><h2 id="并发、共享、虚拟、异步"><a href="#并发、共享、虚拟、异步" class="headerlink" title="并发、共享、虚拟、异步"></a>并发、共享、虚拟、异步</h2><p>没有并发和共享，就没有虚拟和异步</p>
@@ -478,6 +422,62 @@ t_{带权平均周转时间}=\frac{\sum_i^n{t_i}}{n}(作业i的带权周转时�
 <p>索引顺序文件</p>
 <p>直接文件或散列文件</p>
 <p><strong>目录结构</strong></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>操作系统・同步问题</title>
+    <url>/2021/04/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%C2%B7%E5%90%8C%E6%AD%A5%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<p><strong>经典同步问题</strong></p>
+<p><em>1. 生产者消费者问题</em></p>
+<ul>
+<li><p>一组生产者进程 (Producer)</p>
+</li>
+<li><p>一组消费者进程 (Consumer)</p>
+</li>
+<li><p>共享初始为空 大小为 n 的缓冲区 (Buffer)</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">semaphore mutex = 1;  //mutex</span><br><span class="line">semaphore empty = n;  //buffer</span><br><span class="line">semaphore full = 0;   //full</span><br><span class="line"></span><br><span class="line">Producer(){</span><br><span class="line">	while(1){</span><br><span class="line">		Produce();</span><br><span class="line">		P(mutex);</span><br><span class="line">		add2Buffer();</span><br><span class="line">		V(mutex);</span><br><span class="line">		V(full);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">Consumer(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(full);</span><br><span class="line">		P(mutex);</span><br><span class="line">		getFromBuffer();</span><br><span class="line">		V(mutex);</span><br><span class="line">		Consume();</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><em>2. 读者写者问题</em></p>
+<ul>
+<li>读者进程 (Reader)</li>
+<li> 写者进程 (Writer)</li>
+<li> 共享一个文档 (Document)</li>
+<li> 多进程读，不可多进程写</li>
+<li>写进程写，不可读</li>
+<li>写进程检查是否有读进程读</li>
+</ul>
+<p><strong>读进程优先</strong></p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">int count = 0;</span><br><span class="line">semaphore mutex = 1;</span><br><span class="line">semaphore rw = 1;</span><br><span class="line">Reader(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(mutex);</span><br><span class="line">		if(count == 0)</span><br><span class="line">			P(rw);</span><br><span class="line">		count++;</span><br><span class="line">		V(mutex);</span><br><span class="line">		Read();</span><br><span class="line">		P(mutex);</span><br><span class="line">		count--;</span><br><span class="line">		if(count == 0)</span><br><span class="line">			V(rw);</span><br><span class="line">		V(mutex);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Writer(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(rw);</span><br><span class="line">		write();</span><br><span class="line">		v(rw);</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>写进程优先</strong></p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">int count = 0;</span><br><span class="line">semaphore mutex = 1;</span><br><span class="line">semaphore rw = 1;</span><br><span class="line">semaphore w = 1;</span><br><span class="line">Writer(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(w);</span><br><span class="line">		P(rw);</span><br><span class="line">		Write();</span><br><span class="line">		V(rw);</span><br><span class="line">		V(w);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Reader(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(w);</span><br><span class="line">		P(mutex);</span><br><span class="line">		if(count == 0)</span><br><span class="line">			P(rw);</span><br><span class="line">		count++;</span><br><span class="line">		V(mutex);</span><br><span class="line">		V(w);</span><br><span class="line">		Read();</span><br><span class="line">		P(mutex);</span><br><span class="line">		count--;</span><br><span class="line">		if(count == 0)</span><br><span class="line">			V(rw);</span><br><span class="line">		V(mutex);</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><em>3. 哲学家进餐问题</em></p>
+<ul>
+<li>5 名哲学家 (Philosopher)</li>
+<li> 每两名之间有一根筷子 (Chopstick)</li>
+<li> 每名有一碗饭</li>
+<li>吃完饭思考 </li>
+</ul>
+<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">semaphore Chopsticks[5] = {1, 1, 1, 1, 1};</span><br><span class="line">semaphore mutex = 1;</span><br><span class="line">Philosopher(){</span><br><span class="line">	do{</span><br><span class="line">		P(mutex);</span><br><span class="line">		P(Chopsticks[i]);</span><br><span class="line">		P(Chopsticks[(i+1)%5]);</span><br><span class="line">		V(mutex);</span><br><span class="line">		eat();</span><br><span class="line">		V(Chopsticks[i]);</span><br><span class="line">		V(Chopsticks[(i+1)%5]);</span><br><span class="line">		think();</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>4. 吸烟者问题</strong></p>
+<ul>
+<li>3 个吸烟者进程 (Smoker)</li>
+<li>1 个提供者进程 (Offer)</li>
+<li>Smoker1(paper, glue)</li>
+<li>Smoker2(tobacco, glue)</li>
+<li>Smoker3(paper, tobacco)</li>
+<li>Offer(offer1) return paper, glue</li>
+<li>Offer(offer2) return tobacco, glue</li>
+<li>Offer(offer3) return paper, tobacco</li>
+</ul>
+<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">int num = 0;	//store random num</span><br><span class="line">semaphore offer1 = 0;</span><br><span class="line">semaphore offer2 = 0;</span><br><span class="line">semaphore offer3 = 0;</span><br><span class="line">semaphore end = 0;</span><br><span class="line">Offer(){</span><br><span class="line">	whlie(1){</span><br><span class="line">		num++;</span><br><span class="line">		num = num % 3;</span><br><span class="line">		if(num == 0)</span><br><span class="line">			V(offer1);</span><br><span class="line">		else if(num == 1)</span><br><span class="line">			V(offer2);</span><br><span class="line">		else</span><br><span class="line">			V(offer3);</span><br><span class="line">		P(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Smoker1(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(offer3);</span><br><span class="line">		smoke();</span><br><span class="line">		V(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Smoker2(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(offer2);</span><br><span class="line">		smoke();</span><br><span class="line">		V(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line">Smoker3(){</span><br><span class="line">	while(1){</span><br><span class="line">		P(offer1);</span><br><span class="line">		smoke();</span><br><span class="line">		V(end);</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><em>eg1</em></p>
+<ul>
+<li>3 个进程 P1 P2 P3</li>
+<li> 互斥使用 N 个单元的缓冲区 (Buffer)</li>
+<li>P1 produce() return (int num) put() @Buffer</li>
+<li>P2 </li>
+</ul>
 ]]></content>
   </entry>
   <entry>
@@ -2045,6 +2045,184 @@ m阶B树或空树\\
 ]]></content>
   </entry>
   <entry>
+    <title>计算机网络・传输层</title>
+    <url>/2023/09/11/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%C2%B7%E4%BC%A0%E8%BE%93%E5%B1%82/</url>
+    <content><![CDATA[
+<div class="markmap-container" style="height:undefined">
+  <svg data="{&quot;t&quot;:&quot;heading&quot;,&quot;d&quot;:1,&quot;p&quot;:{&quot;lines&quot;:[0,1]},&quot;v&quot;:&quot;传输层&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;bullet_list&quot;,&quot;d&quot;:2,&quot;p&quot;:{&quot;lines&quot;:[1,90]},&quot;v&quot;:&quot;&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[1,2]},&quot;v&quot;:&quot;功能概述&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[2,3]},&quot;v&quot;:&quot;提供应用进程间的逻辑通信&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[3,4]},&quot;v&quot;:&quot;复用和分用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[4,5]},&quot;v&quot;:&quot;复用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[5,6]},&quot;v&quot;:&quot;发送方不同的应用进程使用同一个传输层协议&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[6,7]},&quot;v&quot;:&quot;分用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[7,8]},&quot;v&quot;:&quot;接收方的传输层在剥去报文首部后能把这些数据正确交付至目的应用进程&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[8,9]},&quot;v&quot;:&quot;差错检测（首部和数据部分）&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[9,10]},&quot;v&quot;:&quot;TCP和UDP&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[10,11]},&quot;v&quot;:&quot;寻址与端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[11,12]},&quot;v&quot;:&quot;端口作用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[12,13]},&quot;v&quot;:&quot;让应用层各应用程序将其数据通过端口向下交付给传输层&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[13,14]},&quot;v&quot;:&quot;让传输层知道应当将其报文段中的数据向上通过端口交付给应用层相应的进程&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[14,15]},&quot;v&quot;:&quot;端口号&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[15,16]},&quot;v&quot;:&quot;长度16bit <span class=\&quot;katex\&quot;><span class=\&quot;katex-mathml\&quot;><math xmlns=\&quot;http://www.w3.org/1998/Math/MathML\&quot;><semantics><mrow><msup><mn>2</mn><mn>16</mn></msup><mo>=</mo><mn>65536</mn></mrow><annotation encoding=\&quot;application/x-tex\&quot;>2^{16}=65536</annotation></semantics></math></span><span class=\&quot;katex-html\&quot; aria-hidden=\&quot;true\&quot;><span class=\&quot;base\&quot;><span class=\&quot;strut\&quot; style=\&quot;height:0.8141079999999999em;vertical-align:0em;\&quot;></span><span class=\&quot;mord\&quot;><span class=\&quot;mord\&quot;>2</span><span class=\&quot;msupsub\&quot;><span class=\&quot;vlist-t\&quot;><span class=\&quot;vlist-r\&quot;><span class=\&quot;vlist\&quot; style=\&quot;height:0.8141079999999999em;\&quot;><span style=\&quot;top:-3.063em;margin-right:0.05em;\&quot;><span class=\&quot;pstrut\&quot; style=\&quot;height:2.7em;\&quot;></span><span class=\&quot;sizing reset-size6 size3 mtight\&quot;><span class=\&quot;mord mtight\&quot;><span class=\&quot;mord mtight\&quot;>1</span><span class=\&quot;mord mtight\&quot;>6</span></span></span></span></span></span></span></span></span><span class=\&quot;mspace\&quot; style=\&quot;margin-right:0.2777777777777778em;\&quot;></span><span class=\&quot;mrel\&quot;>=</span><span class=\&quot;mspace\&quot; style=\&quot;margin-right:0.2777777777777778em;\&quot;></span></span><span class=\&quot;base\&quot;><span class=\&quot;strut\&quot; style=\&quot;height:0.64444em;vertical-align:0em;\&quot;></span><span class=\&quot;mord\&quot;>6</span><span class=\&quot;mord\&quot;>5</span><span class=\&quot;mord\&quot;>5</span><span class=\&quot;mord\&quot;>3</span><span class=\&quot;mord\&quot;>6</span></span></span></span>个不同的端口号&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[16,17]},&quot;v&quot;:&quot;端口划分&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[17,18]},&quot;v&quot;:&quot;服务器端使用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[18,19]},&quot;v&quot;:&quot;熟知端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[19,20]},&quot;v&quot;:&quot;0 ~ 1023&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[20,21]},&quot;v&quot;:&quot;FTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[21,22]},&quot;v&quot;:&quot;21&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[22,23]},&quot;v&quot;:&quot;TELNET&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[23,24]},&quot;v&quot;:&quot;23&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[24,25]},&quot;v&quot;:&quot;SMTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[25,26]},&quot;v&quot;:&quot;25&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[26,27]},&quot;v&quot;:&quot;DNS&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[27,28]},&quot;v&quot;:&quot;53&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[28,29]},&quot;v&quot;:&quot;TFTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[29,30]},&quot;v&quot;:&quot;69&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[30,31]},&quot;v&quot;:&quot;HTTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[31,32]},&quot;v&quot;:&quot;80&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[32,33]},&quot;v&quot;:&quot;SNMP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[33,34]},&quot;v&quot;:&quot;161&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[34,35]},&quot;v&quot;:&quot;登记端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[35,36]},&quot;v&quot;:&quot;1024 ~ 49151&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[37,38]},&quot;v&quot;:&quot;客户端使用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[38,39]},&quot;v&quot;:&quot;客户进程运行时动态选择&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[39,40]},&quot;v&quot;:&quot;又称临时端口&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[40,41]},&quot;v&quot;:&quot;套接字&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[41,42]},&quot;v&quot;:&quot;端口和IP拼接&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[42,43]},&quot;v&quot;:&quot;Socket = (IP地址:端口号)&quot;}]}]}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[43,44]},&quot;v&quot;:&quot;UDP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[44,45]},&quot;v&quot;:&quot;概述&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[45,46]},&quot;v&quot;:&quot;在IP数据报基础上增加&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[46,47]},&quot;v&quot;:&quot;复用&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[47,48]},&quot;v&quot;:&quot;分用&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[48,49]},&quot;v&quot;:&quot;差错检测&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[49,50]},&quot;v&quot;:&quot;无需建立连接&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[50,51]},&quot;v&quot;:&quot;无连接状态&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[51,52]},&quot;v&quot;:&quot;分组首部开销小&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[52,53]},&quot;v&quot;:&quot;不保证可靠交付&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[53,54]},&quot;v&quot;:&quot;面向报文&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[54,55]},&quot;v&quot;:&quot;IP协议字段17&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[55,56]},&quot;v&quot;:&quot;报文长度由发送程序决定&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[56,57]},&quot;v&quot;:&quot;首部格式&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[57,58]},&quot;v&quot;:&quot;8B 4字段构成&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[58,59]},&quot;v&quot;:&quot;源端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[59,60]},&quot;v&quot;:&quot;需要对方回信时选用&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[60,61]},&quot;v&quot;:&quot;不需要可用全0&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[61,62]},&quot;v&quot;:&quot;目的端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[62,63]},&quot;v&quot;:&quot;终点交付报文时必须使用&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[63,64]},&quot;v&quot;:&quot;长度&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[64,65]},&quot;v&quot;:&quot;最小值8（仅首部）&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[65,66]},&quot;v&quot;:&quot;校验和&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[66,67]},&quot;v&quot;:&quot;检测UDP数据报传输过程是否有错&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[67,68]},&quot;v&quot;:&quot;有错丢弃&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[68,69]},&quot;v&quot;:&quot;源主机不想计算校验和填写全0&quot;}]}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[69,70]},&quot;v&quot;:&quot;校验&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[70,71]},&quot;v&quot;:&quot;计算校验和在UDP数据报前增加12B伪首部&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[71,72]},&quot;v&quot;:&quot;伪首部不是UDP真正首部只用于计算校验和&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[72,73]},&quot;v&quot;:&quot;TCP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[73,74]},&quot;v&quot;:&quot;概述&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[74,75]},&quot;v&quot;:&quot;面向连接&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[75,76]},&quot;v&quot;:&quot;可靠交付&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[76,77]},&quot;v&quot;:&quot;全双工通信&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[77,78]},&quot;v&quot;:&quot;允许双方任何时候都能发送数据&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[78,79]},&quot;v&quot;:&quot;两端设有缓存暂存数据&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[79,80]},&quot;v&quot;:&quot;发送缓存&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[80,81]},&quot;v&quot;:&quot;发送程序传给发送方TCP准备的数据&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[81,82]},&quot;v&quot;:&quot;TCP已发送尚未收到确认的数据&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[82,83]},&quot;v&quot;:&quot;接收缓存&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[83,84]},&quot;v&quot;:&quot;按序到达但尚未被接收程序读取的数据&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[84,85]},&quot;v&quot;:&quot;不按序到达的数据&quot;}]}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[85,86]},&quot;v&quot;:&quot;面向字节流&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[86,87]},&quot;v&quot;:&quot;仅视为一连串无结构的字节流&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[87,88]},&quot;v&quot;:&quot;报文长度由接受方给出的窗口值和当前网络拥塞程度决定&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[88,90]},&quot;v&quot;:&quot;&quot;}]}]},{&quot;t&quot;:&quot;heading&quot;,&quot;d&quot;:2,&quot;p&quot;:{&quot;lines&quot;:[88,90]},&quot;v&quot;:&quot;报文段&quot;}]}"></svg>
+</div>
+
+<h1 id="传输层"><a href="#传输层" class="headerlink" title="传输层"></a>传输层</h1><ul>
+<li>功能概述<ul>
+<li>提供应用进程间的逻辑通信</li>
+<li>复用和分用<ul>
+<li>复用<ul>
+<li>发送方不同的应用进程使用同一个传输层协议</li>
+</ul>
+</li>
+<li>分用<ul>
+<li>接收方的传输层在剥去报文首部后能把这些数据正确交付至目的应用进程</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>差错检测（首部和数据部分）</li>
+<li>TCP 和 UDP</li>
+</ul>
+</li>
+<li><p> 寻址与端口</p>
+<ul>
+<li>端口作用<ul>
+<li>让应用层各应用程序将其数据通过端口向下交付给传输层</li>
+<li>让传输层知道应当将其报文段中的数据向上通过端口交付给应用层相应的进程</li>
+</ul>
+</li>
+<li><p>端口号</p>
+<ul>
+<li>长度 16bit $2^{16}=65536$ 个不同的端口号</li>
+<li><p>端口划分</p>
+<ul>
+<li><p>服务器端使用</p>
+<ul>
+<li>熟知端口<ul>
+<li> 0 ~ 1023</li>
+<li>FTP<ul>
+<li>21</li>
+</ul>
+</li>
+<li>TELNET<ul>
+<li>23</li>
+</ul>
+</li>
+<li>SMTP<ul>
+<li>25</li>
+</ul>
+</li>
+<li>DNS<ul>
+<li>53</li>
+</ul>
+</li>
+<li>TFTP<ul>
+<li>69</li>
+</ul>
+</li>
+<li>HTTP<ul>
+<li>80</li>
+</ul>
+</li>
+<li>SNMP<ul>
+<li>161</li>
+</ul>
+</li>
+</ul>
+</li>
+<li> 登记端口<ul>
+<li> 1024 ~ 49151</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p> 客户端使用</p>
+<ul>
+<li>客户进程运行时动态选择</li>
+<li>又称临时端口</li>
+</ul>
+</li>
+<li>套接字<ul>
+<li>端口和 IP 拼接</li>
+<li> Socket = (IP 地址：端口号)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>UDP<ul>
+<li> 概述<ul>
+<li>在 IP 数据报基础上增加<ul>
+<li>复用</li>
+<li>分用</li>
+<li>差错检测</li>
+</ul>
+</li>
+<li>无需建立连接</li>
+<li>无连接状态</li>
+<li>分组首部开销小</li>
+<li>不保证可靠交付</li>
+<li>面向报文</li>
+<li> IP 协议字段 17</li>
+<li> 报文长度由发送程序决定</li>
+</ul>
+</li>
+<li>首部格式<ul>
+<li> 8B 4 字段构成<ul>
+<li>源端口<ul>
+<li>需要对方回信时选用</li>
+<li>不需要可用全 0</li>
+</ul>
+</li>
+<li> 目的端口<ul>
+<li>终点交付报文时必须使用</li>
+</ul>
+</li>
+<li>长度<ul>
+<li>最小值 8（仅首部）</li>
+</ul>
+</li>
+<li>校验和<ul>
+<li>检测 UDP 数据报传输过程是否有错</li>
+<li>有错丢弃</li>
+<li>源主机不想计算校验和填写全 0</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li> 校验<ul>
+<li>计算校验和在 UDP 数据报前增加 12B 伪首部</li>
+<li>伪首部不是 UDP 真正首部只用于计算校验和</li>
+</ul>
+</li>
+</ul>
+</li>
+<li> TCP<ul>
+<li> 概述<ul>
+<li>面向连接</li>
+<li>可靠交付</li>
+<li>全双工通信<ul>
+<li>允许双方任何时候都能发送数据</li>
+<li>两端设有缓存暂存数据<ul>
+<li>发送缓存    <ul>
+<li>发送程序传给发送方 TCP 准备的数据</li>
+<li> TCP 已发送尚未收到确认的数据</li>
+</ul>
+</li>
+<li>接收缓存<ul>
+<li>按序到达但尚未被接收程序读取的数据</li>
+<li>不按序到达的数据</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>面向字节流<ul>
+<li>仅视为一连串无结构的字节流</li>
+</ul>
+</li>
+<li>报文长度由接受方给出的窗口值和当前网络拥塞程度决定</li>
+</ul>
+</li>
+<li>报文段<br>  - </li>
+</ul>
+</li>
+</ul>
+]]></content>
+  </entry>
+  <entry>
     <title>计算机网络・网络层</title>
     <url>/2023/09/10/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%C2%B7%E7%BD%91%E7%BB%9C%E5%B1%82/</url>
     <content><![CDATA[
@@ -2708,15 +2886,6 @@ m阶B树或空树\\
 </ul>
 </li>
 </ul>
-]]></content>
-  </entry>
-  <entry>
-    <title>计算机网络・传输层</title>
-    <url>/2023/09/11/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%C2%B7%E4%BC%A0%E8%BE%93%E5%B1%82/</url>
-    <content><![CDATA[
-<div class="markmap-container" style="height:undefined">
-  <svg data="{&quot;t&quot;:&quot;heading&quot;,&quot;d&quot;:1,&quot;p&quot;:{&quot;lines&quot;:[0,1]},&quot;v&quot;:&quot;传输层&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;bullet_list&quot;,&quot;d&quot;:2,&quot;p&quot;:{&quot;lines&quot;:[1,90]},&quot;v&quot;:&quot;&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[1,2]},&quot;v&quot;:&quot;功能概述&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[2,3]},&quot;v&quot;:&quot;提供应用进程间的逻辑通信&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[3,4]},&quot;v&quot;:&quot;复用和分用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[4,5]},&quot;v&quot;:&quot;复用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[5,6]},&quot;v&quot;:&quot;发送方不同的应用进程使用同一个传输层协议&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[6,7]},&quot;v&quot;:&quot;分用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[7,8]},&quot;v&quot;:&quot;接收方的传输层在剥去报文首部后能把这些数据正确交付至目的应用进程&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[8,9]},&quot;v&quot;:&quot;差错检测（首部和数据部分）&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[9,10]},&quot;v&quot;:&quot;TCP和UDP&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[10,11]},&quot;v&quot;:&quot;寻址与端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[11,12]},&quot;v&quot;:&quot;端口作用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[12,13]},&quot;v&quot;:&quot;让应用层各应用程序将其数据通过端口向下交付给传输层&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[13,14]},&quot;v&quot;:&quot;让传输层知道应当将其报文段中的数据向上通过端口交付给应用层相应的进程&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[14,15]},&quot;v&quot;:&quot;端口号&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[15,16]},&quot;v&quot;:&quot;长度16bit <span class=\&quot;katex\&quot;><span class=\&quot;katex-mathml\&quot;><math xmlns=\&quot;http://www.w3.org/1998/Math/MathML\&quot;><semantics><mrow><msup><mn>2</mn><mn>16</mn></msup><mo>=</mo><mn>65536</mn></mrow><annotation encoding=\&quot;application/x-tex\&quot;>2^{16}=65536</annotation></semantics></math></span><span class=\&quot;katex-html\&quot; aria-hidden=\&quot;true\&quot;><span class=\&quot;base\&quot;><span class=\&quot;strut\&quot; style=\&quot;height:0.8141079999999999em;vertical-align:0em;\&quot;></span><span class=\&quot;mord\&quot;><span class=\&quot;mord\&quot;>2</span><span class=\&quot;msupsub\&quot;><span class=\&quot;vlist-t\&quot;><span class=\&quot;vlist-r\&quot;><span class=\&quot;vlist\&quot; style=\&quot;height:0.8141079999999999em;\&quot;><span style=\&quot;top:-3.063em;margin-right:0.05em;\&quot;><span class=\&quot;pstrut\&quot; style=\&quot;height:2.7em;\&quot;></span><span class=\&quot;sizing reset-size6 size3 mtight\&quot;><span class=\&quot;mord mtight\&quot;><span class=\&quot;mord mtight\&quot;>1</span><span class=\&quot;mord mtight\&quot;>6</span></span></span></span></span></span></span></span></span><span class=\&quot;mspace\&quot; style=\&quot;margin-right:0.2777777777777778em;\&quot;></span><span class=\&quot;mrel\&quot;>=</span><span class=\&quot;mspace\&quot; style=\&quot;margin-right:0.2777777777777778em;\&quot;></span></span><span class=\&quot;base\&quot;><span class=\&quot;strut\&quot; style=\&quot;height:0.64444em;vertical-align:0em;\&quot;></span><span class=\&quot;mord\&quot;>6</span><span class=\&quot;mord\&quot;>5</span><span class=\&quot;mord\&quot;>5</span><span class=\&quot;mord\&quot;>3</span><span class=\&quot;mord\&quot;>6</span></span></span></span>个不同的端口号&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[16,17]},&quot;v&quot;:&quot;端口划分&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[17,18]},&quot;v&quot;:&quot;服务器端使用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[18,19]},&quot;v&quot;:&quot;熟知端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[19,20]},&quot;v&quot;:&quot;0 ~ 1023&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[20,21]},&quot;v&quot;:&quot;FTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[21,22]},&quot;v&quot;:&quot;21&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[22,23]},&quot;v&quot;:&quot;TELNET&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[23,24]},&quot;v&quot;:&quot;23&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[24,25]},&quot;v&quot;:&quot;SMTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[25,26]},&quot;v&quot;:&quot;25&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[26,27]},&quot;v&quot;:&quot;DNS&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[27,28]},&quot;v&quot;:&quot;53&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[28,29]},&quot;v&quot;:&quot;TFTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[29,30]},&quot;v&quot;:&quot;69&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[30,31]},&quot;v&quot;:&quot;HTTP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[31,32]},&quot;v&quot;:&quot;80&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[32,33]},&quot;v&quot;:&quot;SNMP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:15,&quot;p&quot;:{&quot;lines&quot;:[33,34]},&quot;v&quot;:&quot;161&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[34,35]},&quot;v&quot;:&quot;登记端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[35,36]},&quot;v&quot;:&quot;1024 ~ 49151&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[37,38]},&quot;v&quot;:&quot;客户端使用&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[38,39]},&quot;v&quot;:&quot;客户进程运行时动态选择&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[39,40]},&quot;v&quot;:&quot;又称临时端口&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[40,41]},&quot;v&quot;:&quot;套接字&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[41,42]},&quot;v&quot;:&quot;端口和IP拼接&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[42,43]},&quot;v&quot;:&quot;Socket = (IP地址:端口号)&quot;}]}]}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[43,44]},&quot;v&quot;:&quot;UDP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[44,45]},&quot;v&quot;:&quot;概述&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[45,46]},&quot;v&quot;:&quot;在IP数据报基础上增加&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[46,47]},&quot;v&quot;:&quot;复用&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[47,48]},&quot;v&quot;:&quot;分用&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[48,49]},&quot;v&quot;:&quot;差错检测&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[49,50]},&quot;v&quot;:&quot;无需建立连接&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[50,51]},&quot;v&quot;:&quot;无连接状态&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[51,52]},&quot;v&quot;:&quot;分组首部开销小&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[52,53]},&quot;v&quot;:&quot;不保证可靠交付&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[53,54]},&quot;v&quot;:&quot;面向报文&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[54,55]},&quot;v&quot;:&quot;IP协议字段17&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[55,56]},&quot;v&quot;:&quot;报文长度由发送程序决定&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[56,57]},&quot;v&quot;:&quot;首部格式&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[57,58]},&quot;v&quot;:&quot;8B 4字段构成&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[58,59]},&quot;v&quot;:&quot;源端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[59,60]},&quot;v&quot;:&quot;需要对方回信时选用&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[60,61]},&quot;v&quot;:&quot;不需要可用全0&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[61,62]},&quot;v&quot;:&quot;目的端口&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[62,63]},&quot;v&quot;:&quot;终点交付报文时必须使用&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[63,64]},&quot;v&quot;:&quot;长度&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[64,65]},&quot;v&quot;:&quot;最小值8（仅首部）&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[65,66]},&quot;v&quot;:&quot;校验和&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[66,67]},&quot;v&quot;:&quot;检测UDP数据报传输过程是否有错&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[67,68]},&quot;v&quot;:&quot;有错丢弃&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[68,69]},&quot;v&quot;:&quot;源主机不想计算校验和填写全0&quot;}]}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[69,70]},&quot;v&quot;:&quot;校验&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[70,71]},&quot;v&quot;:&quot;计算校验和在UDP数据报前增加12B伪首部&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[71,72]},&quot;v&quot;:&quot;伪首部不是UDP真正首部只用于计算校验和&quot;}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:3,&quot;p&quot;:{&quot;lines&quot;:[72,73]},&quot;v&quot;:&quot;TCP&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[73,74]},&quot;v&quot;:&quot;概述&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[74,75]},&quot;v&quot;:&quot;面向连接&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[75,76]},&quot;v&quot;:&quot;可靠交付&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[76,77]},&quot;v&quot;:&quot;全双工通信&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[77,78]},&quot;v&quot;:&quot;允许双方任何时候都能发送数据&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[78,79]},&quot;v&quot;:&quot;两端设有缓存暂存数据&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[79,80]},&quot;v&quot;:&quot;发送缓存&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[80,81]},&quot;v&quot;:&quot;发送程序传给发送方TCP准备的数据&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[81,82]},&quot;v&quot;:&quot;TCP已发送尚未收到确认的数据&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:11,&quot;p&quot;:{&quot;lines&quot;:[82,83]},&quot;v&quot;:&quot;接收缓存&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[83,84]},&quot;v&quot;:&quot;按序到达但尚未被接收程序读取的数据&quot;},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:13,&quot;p&quot;:{&quot;lines&quot;:[84,85]},&quot;v&quot;:&quot;不按序到达的数据&quot;}]}]}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[85,86]},&quot;v&quot;:&quot;面向字节流&quot;,&quot;c&quot;:[{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:9,&quot;p&quot;:{&quot;lines&quot;:[86,87]},&quot;v&quot;:&quot;仅视为一连串无结构的字节流&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:7,&quot;p&quot;:{&quot;lines&quot;:[87,88]},&quot;v&quot;:&quot;报文长度由接受方给出的窗口值和当前网络拥塞程度决定&quot;}]},{&quot;t&quot;:&quot;list_item&quot;,&quot;d&quot;:5,&quot;p&quot;:{&quot;lines&quot;:[88,90]},&quot;v&quot;:&quot;&quot;}]}]},{&quot;t&quot;:&quot;heading&quot;,&quot;d&quot;:2,&quot;p&quot;:{&quot;lines&quot;:[88,90]},&quot;v&quot;:&quot;报文段&quot;}]}"></svg>
-</div>
 ]]></content>
   </entry>
 </search>
